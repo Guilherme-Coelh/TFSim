@@ -13,6 +13,7 @@
 #include "gui.hpp"
 #include <unistd.h>
 #include <libgen.h>
+#include "metricas.hpp"
 
 using std::string;
 using std::vector;
@@ -51,6 +52,7 @@ const char* get_base_path(const char **argv) {
 
 int sc_main(int argc, char *argv[])
 {
+    Metrics::instance().reset();
     using namespace nana;
     vector<string> instruction_queue;
     string bench_name = "";
@@ -941,12 +943,14 @@ int sc_main(int argc, char *argv[])
     run_all.events().click([&]{
         // enquanto queue e rob nao estao vazios, roda ate o fim
         while(!(top1.get_queue().queue_is_empty() && top1.get_rob().rob_is_empty())){
+            Metrics::instance().cycles++;
             if(sc_is_running())
                 sc_start();
         }
 
         top1.metrics(cpu_freq, mode, bench_name, n_bits);
     });
+    Metrics::instance().report();
 
     exit.events().click([]
     {
